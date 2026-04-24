@@ -1,5 +1,5 @@
 """
-Commission Design Promo 2K20 — Application multi-agents (v13 - Final Stable)
+Commission Design Promo 2K20 — Application multi-agents (v13 - Final Stable + Vert/Jaune)
 Agents : LK (DA, bleu) · Junior (Planning, vert)
 Utilisateurs : Designer (violet) · Candidat (bleu clair)
 Charte graphique Studio LK v2.2
@@ -93,7 +93,7 @@ AVT_DSGN = avatar_designer()
 AVT_CAND = avatar_candidat()
 
 # ══════════════════════════════════════════
-# ANIMATION CSS PARTICULES (100% fiable sur Streamlit)
+# ANIMATION CSS PARTICULES (100% fiable) - AVEC VERT & JAUNE
 # ══════════════════════════════════════════
 def inject_particle_animation():
     st.markdown("""
@@ -106,69 +106,75 @@ def inject_particle_animation():
         width: 100%;
         height: 100%;
         z-index: -1;
-        background: #07070E;
+        background: linear-gradient(135deg, #07070E 0%, #0a0a18 50%, #0c0c1a 100%);
         overflow: hidden;
     }
     
-    /* Particules flottantes */
+    /* PARTICULES AVEC COULEURS DE LA CHARTE (violet, bleu, cyan, vert, jaune) */
     .particle {
         position: absolute;
-        background: radial-gradient(circle, rgba(124,58,237,0.8), rgba(14,165,233,0.4));
         border-radius: 50%;
         pointer-events: none;
         animation: floatParticle linear infinite;
     }
     
-    /* Tailles et positions aléatoires */
-    .particle:nth-child(1) { width: 4px; height: 4px; top: 15%; left: 10%; animation-duration: 18s; animation-delay: 0s; }
+    /* Distribution des 5 couleurs */
+    .particle:nth-child(5n+1) { background: radial-gradient(circle, rgba(124,58,237,0.9), rgba(124,58,237,0.2)); }  /* Violet #7C3AED */
+    .particle:nth-child(5n+2) { background: radial-gradient(circle, rgba(14,165,233,0.9), rgba(14,165,233,0.2)); }    /* Bleu #0EA5E9 */
+    .particle:nth-child(5n+3) { background: radial-gradient(circle, rgba(6,182,212,0.9), rgba(6,182,212,0.2)); }      /* Cyan #06B6D4 */
+    .particle:nth-child(5n+4) { background: radial-gradient(circle, rgba(16,185,129,0.8), rgba(16,185,129,0.15)); }   /* Vert #10B981 */
+    .particle:nth-child(5n+5) { background: radial-gradient(circle, rgba(245,158,11,0.8), rgba(245,158,11,0.15)); }    /* Jaune #F59E0B */
+    
+    /* Tailles et positions aléatoires (50 particules) */
+    .particle:nth-child(1) { width: 3px; height: 3px; top: 15%; left: 10%; animation-duration: 18s; animation-delay: 0s; }
     .particle:nth-child(2) { width: 2px; height: 2px; top: 35%; left: 25%; animation-duration: 22s; animation-delay: 1s; }
-    .particle:nth-child(3) { width: 5px; height: 5px; top: 55%; left: 45%; animation-duration: 14s; animation-delay: 2s; }
+    .particle:nth-child(3) { width: 4px; height: 4px; top: 55%; left: 45%; animation-duration: 14s; animation-delay: 2s; }
     .particle:nth-child(4) { width: 3px; height: 3px; top: 75%; left: 70%; animation-duration: 20s; animation-delay: 0.5s; }
-    .particle:nth-child(5) { width: 6px; height: 6px; top: 85%; left: 90%; animation-duration: 16s; animation-delay: 1.5s; }
+    .particle:nth-child(5) { width: 5px; height: 5px; top: 85%; left: 90%; animation-duration: 16s; animation-delay: 1.5s; }
     .particle:nth-child(6) { width: 2px; height: 2px; top: 25%; left: 80%; animation-duration: 24s; animation-delay: 3s; }
-    .particle:nth-child(7) { width: 4px; height: 4px; top: 45%; left: 15%; animation-duration: 12s; animation-delay: 0.8s; }
-    .particle:nth-child(8) { width: 3px; height: 3px; top: 65%; left: 35%; animation-duration: 19s; animation-delay: 2.2s; }
-    .particle:nth-child(9) { width: 5px; height: 5px; top: 10%; left: 55%; animation-duration: 21s; animation-delay: 4s; }
+    .particle:nth-child(7) { width: 3px; height: 3px; top: 45%; left: 15%; animation-duration: 12s; animation-delay: 0.8s; }
+    .particle:nth-child(8) { width: 2px; height: 2px; top: 65%; left: 35%; animation-duration: 19s; animation-delay: 2.2s; }
+    .particle:nth-child(9) { width: 4px; height: 4px; top: 10%; left: 55%; animation-duration: 21s; animation-delay: 4s; }
     .particle:nth-child(10) { width: 2px; height: 2px; top: 30%; left: 95%; animation-duration: 17s; animation-delay: 1.2s; }
-    .particle:nth-child(11) { width: 4px; height: 4px; top: 50%; left: 5%; animation-duration: 23s; animation-delay: 2.5s; }
-    .particle:nth-child(12) { width: 3px; height: 3px; top: 70%; left: 85%; animation-duration: 15s; animation-delay: 0.3s; }
-    .particle:nth-child(13) { width: 6px; height: 6px; top: 90%; left: 20%; animation-duration: 25s; animation-delay: 3.5s; }
+    .particle:nth-child(11) { width: 3px; height: 3px; top: 50%; left: 5%; animation-duration: 23s; animation-delay: 2.5s; }
+    .particle:nth-child(12) { width: 2px; height: 2px; top: 70%; left: 85%; animation-duration: 15s; animation-delay: 0.3s; }
+    .particle:nth-child(13) { width: 5px; height: 5px; top: 90%; left: 20%; animation-duration: 25s; animation-delay: 3.5s; }
     .particle:nth-child(14) { width: 2px; height: 2px; top: 5%; left: 40%; animation-duration: 13s; animation-delay: 1.8s; }
-    .particle:nth-child(15) { width: 4px; height: 4px; top: 40%; left: 60%; animation-duration: 18s; animation-delay: 4.2s; }
-    .particle:nth-child(16) { width: 3px; height: 3px; top: 60%; left: 75%; animation-duration: 20s; animation-delay: 0.7s; }
-    .particle:nth-child(17) { width: 5px; height: 5px; top: 80%; left: 50%; animation-duration: 22s; animation-delay: 2.8s; }
+    .particle:nth-child(15) { width: 3px; height: 3px; top: 40%; left: 60%; animation-duration: 18s; animation-delay: 4.2s; }
+    .particle:nth-child(16) { width: 2px; height: 2px; top: 60%; left: 75%; animation-duration: 20s; animation-delay: 0.7s; }
+    .particle:nth-child(17) { width: 4px; height: 4px; top: 80%; left: 50%; animation-duration: 22s; animation-delay: 2.8s; }
     .particle:nth-child(18) { width: 2px; height: 2px; top: 20%; left: 65%; animation-duration: 16s; animation-delay: 1.1s; }
-    .particle:nth-child(19) { width: 4px; height: 4px; top: 95%; left: 8%; animation-duration: 19s; animation-delay: 3.2s; }
-    .particle:nth-child(20) { width: 3px; height: 3px; top: 8%; left: 30%; animation-duration: 14s; animation-delay: 4.5s; }
-    .particle:nth-child(21) { width: 5px; height: 5px; top: 38%; left: 98%; animation-duration: 24s; animation-delay: 0.4s; }
+    .particle:nth-child(19) { width: 3px; height: 3px; top: 95%; left: 8%; animation-duration: 19s; animation-delay: 3.2s; }
+    .particle:nth-child(20) { width: 2px; height: 2px; top: 8%; left: 30%; animation-duration: 14s; animation-delay: 4.5s; }
+    .particle:nth-child(21) { width: 4px; height: 4px; top: 38%; left: 98%; animation-duration: 24s; animation-delay: 0.4s; }
     .particle:nth-child(22) { width: 2px; height: 2px; top: 58%; left: 12%; animation-duration: 11s; animation-delay: 2.1s; }
-    .particle:nth-child(23) { width: 4px; height: 4px; top: 78%; left: 42%; animation-duration: 21s; animation-delay: 3.8s; }
-    .particle:nth-child(24) { width: 3px; height: 3px; top: 12%; left: 88%; animation-duration: 17s; animation-delay: 1.4s; }
-    .particle:nth-child(25) { width: 6px; height: 6px; top: 32%; left: 22%; animation-duration: 23s; animation-delay: 2.9s; }
+    .particle:nth-child(23) { width: 3px; height: 3px; top: 78%; left: 42%; animation-duration: 21s; animation-delay: 3.8s; }
+    .particle:nth-child(24) { width: 2px; height: 2px; top: 12%; left: 88%; animation-duration: 17s; animation-delay: 1.4s; }
+    .particle:nth-child(25) { width: 5px; height: 5px; top: 32%; left: 22%; animation-duration: 23s; animation-delay: 2.9s; }
     .particle:nth-child(26) { width: 2px; height: 2px; top: 52%; left: 78%; animation-duration: 15s; animation-delay: 0.6s; }
-    .particle:nth-child(27) { width: 4px; height: 4px; top: 72%; left: 32%; animation-duration: 18s; animation-delay: 3.1s; }
-    .particle:nth-child(28) { width: 3px; height: 3px; top: 92%; left: 55%; animation-duration: 20s; animation-delay: 1.9s; }
-    .particle:nth-child(29) { width: 5px; height: 5px; top: 18%; left: 48%; animation-duration: 12s; animation-delay: 4.3s; }
+    .particle:nth-child(27) { width: 3px; height: 3px; top: 72%; left: 32%; animation-duration: 18s; animation-delay: 3.1s; }
+    .particle:nth-child(28) { width: 2px; height: 2px; top: 92%; left: 55%; animation-duration: 20s; animation-delay: 1.9s; }
+    .particle:nth-child(29) { width: 4px; height: 4px; top: 18%; left: 48%; animation-duration: 12s; animation-delay: 4.3s; }
     .particle:nth-child(30) { width: 2px; height: 2px; top: 48%; left: 92%; animation-duration: 22s; animation-delay: 0.9s; }
-    .particle:nth-child(31) { width: 4px; height: 4px; top: 68%; left: 8%; animation-duration: 16s; animation-delay: 2.4s; }
-    .particle:nth-child(32) { width: 3px; height: 3px; top: 88%; left: 68%; animation-duration: 19s; animation-delay: 3.6s; }
-    .particle:nth-child(33) { width: 6px; height: 6px; top: 28%; left: 52%; animation-duration: 14s; animation-delay: 1.7s; }
+    .particle:nth-child(31) { width: 3px; height: 3px; top: 68%; left: 8%; animation-duration: 16s; animation-delay: 2.4s; }
+    .particle:nth-child(32) { width: 2px; height: 2px; top: 88%; left: 68%; animation-duration: 19s; animation-delay: 3.6s; }
+    .particle:nth-child(33) { width: 5px; height: 5px; top: 28%; left: 52%; animation-duration: 14s; animation-delay: 1.7s; }
     .particle:nth-child(34) { width: 2px; height: 2px; top: 42%; left: 3%; animation-duration: 25s; animation-delay: 2.3s; }
-    .particle:nth-child(35) { width: 4px; height: 4px; top: 62%; left: 62%; animation-duration: 13s; animation-delay: 4.1s; }
-    .particle:nth-child(36) { width: 3px; height: 3px; top: 82%; left: 82%; animation-duration: 21s; animation-delay: 0.2s; }
-    .particle:nth-child(37) { width: 5px; height: 5px; top: 22%; left: 18%; animation-duration: 17s; animation-delay: 3.4s; }
+    .particle:nth-child(35) { width: 3px; height: 3px; top: 62%; left: 62%; animation-duration: 13s; animation-delay: 4.1s; }
+    .particle:nth-child(36) { width: 2px; height: 2px; top: 82%; left: 82%; animation-duration: 21s; animation-delay: 0.2s; }
+    .particle:nth-child(37) { width: 4px; height: 4px; top: 22%; left: 18%; animation-duration: 17s; animation-delay: 3.4s; }
     .particle:nth-child(38) { width: 2px; height: 2px; top: 56%; left: 38%; animation-duration: 23s; animation-delay: 1.5s; }
-    .particle:nth-child(39) { width: 4px; height: 4px; top: 76%; left: 58%; animation-duration: 15s; animation-delay: 2.7s; }
-    .particle:nth-child(40) { width: 3px; height: 3px; top: 96%; left: 14%; animation-duration: 18s; animation-delay: 3.9s; }
-    .particle:nth-child(41) { width: 5px; height: 5px; top: 6%; left: 75%; animation-duration: 20s; animation-delay: 0.1s; }
+    .particle:nth-child(39) { width: 3px; height: 3px; top: 76%; left: 58%; animation-duration: 15s; animation-delay: 2.7s; }
+    .particle:nth-child(40) { width: 2px; height: 2px; top: 96%; left: 14%; animation-duration: 18s; animation-delay: 3.9s; }
+    .particle:nth-child(41) { width: 4px; height: 4px; top: 6%; left: 75%; animation-duration: 20s; animation-delay: 0.1s; }
     .particle:nth-child(42) { width: 2px; height: 2px; top: 36%; left: 42%; animation-duration: 11s; animation-delay: 2.6s; }
-    .particle:nth-child(43) { width: 4px; height: 4px; top: 66%; left: 28%; animation-duration: 24s; animation-delay: 1.3s; }
-    .particle:nth-child(44) { width: 3px; height: 3px; top: 86%; left: 48%; animation-duration: 16s; animation-delay: 3.0s; }
-    .particle:nth-child(45) { width: 6px; height: 6px; top: 14%; left: 98%; animation-duration: 19s; animation-delay: 4.7s; }
+    .particle:nth-child(43) { width: 3px; height: 3px; top: 66%; left: 28%; animation-duration: 24s; animation-delay: 1.3s; }
+    .particle:nth-child(44) { width: 2px; height: 2px; top: 86%; left: 48%; animation-duration: 16s; animation-delay: 3.0s; }
+    .particle:nth-child(45) { width: 5px; height: 5px; top: 14%; left: 98%; animation-duration: 19s; animation-delay: 4.7s; }
     .particle:nth-child(46) { width: 2px; height: 2px; top: 44%; left: 72%; animation-duration: 22s; animation-delay: 0.8s; }
-    .particle:nth-child(47) { width: 4px; height: 4px; top: 64%; left: 18%; animation-duration: 14s; animation-delay: 2.0s; }
-    .particle:nth-child(48) { width: 3px; height: 3px; top: 84%; left: 38%; animation-duration: 25s; animation-delay: 3.3s; }
-    .particle:nth-child(49) { width: 5px; height: 5px; top: 26%; left: 82%; animation-duration: 12s; animation-delay: 1.0s; }
+    .particle:nth-child(47) { width: 3px; height: 3px; top: 64%; left: 18%; animation-duration: 14s; animation-delay: 2.0s; }
+    .particle:nth-child(48) { width: 2px; height: 2px; top: 84%; left: 38%; animation-duration: 25s; animation-delay: 3.3s; }
+    .particle:nth-child(49) { width: 4px; height: 4px; top: 26%; left: 82%; animation-duration: 12s; animation-delay: 1.0s; }
     .particle:nth-child(50) { width: 2px; height: 2px; top: 46%; left: 58%; animation-duration: 18s; animation-delay: 4.6s; }
     
     @keyframes floatParticle {
@@ -177,13 +183,13 @@ def inject_particle_animation():
             opacity: 0;
         }
         10% {
-            opacity: 0.7;
+            opacity: 0.8;
         }
         90% {
             opacity: 0.3;
         }
         100% {
-            transform: translateY(-500px) translateX(calc(80px * (sin(var(--angle, 1)))));
+            transform: translateY(-500px) translateX(calc(80px * sin(1rad)));
             opacity: 0;
         }
     }
@@ -615,7 +621,7 @@ def load_css():
     """, unsafe_allow_html=True)
 
 # ══════════════════════════════════════════
-# FILTRE CONTENU & INITIALISATION
+# TOUTES LES AUTRES FONCTIONS (inchangées du v13)
 # ══════════════════════════════════════════
 SUJETS_INTERDITS = [
     "crime","criminalité","meurtre","viol","sexuel","pornographie","drogue",
@@ -640,9 +646,6 @@ def init_data_files():
 
 init_data_files()
 
-# ══════════════════════════════════════════
-# SUIVI LIVRABLES
-# ══════════════════════════════════════════
 def lire_suivi() -> dict:
     try:
         with open(SUIVI_FILE) as f: return json.load(f)
@@ -671,9 +674,6 @@ def demarrer_livrable(nom: str):
     suivi = lire_suivi()
     if suivi.get(nom,"non commencé") == "non commencé": suivi[nom] = "en cours"; ecrire_suivi(suivi)
 
-# ══════════════════════════════════════════
-# JOURNAL IDÉES
-# ══════════════════════════════════════════
 def lire_idees() -> list:
     try:
         with open(IDEAS_FILE, encoding="utf-8") as f: return json.load(f)
@@ -703,9 +703,6 @@ def resumer_idees_pour_lead() -> str:
         lignes.append(f"- [{i['timestamp']}] {emoji} ({i['statut'].upper()}) Designer: {i['designer_msg'][:150]}{fj}\n  → LK: {i['lk_response'][:150]}")
     return "\n".join(lignes)
 
-# ══════════════════════════════════════════
-# CANDIDATS & PLANNING
-# ══════════════════════════════════════════
 def ajouter_candidat(nom, prenom, telephone, matricule, sujet, photo_bytes=None):
     df = pd.read_csv(DATA_DIR/"candidats.csv")
     nid = str(uuid.uuid4())[:8]
@@ -737,9 +734,6 @@ def get_candidat_par_telephone(tel):
     res = df[df["telephone"]==tel]
     return res.iloc[0] if not res.empty else None
 
-# ══════════════════════════════════════════
-# EXPORT & GROQ
-# ══════════════════════════════════════════
 def generer_zip_candidats() -> bytes:
     df = pd.read_csv(DATA_DIR/"candidats.csv")
     buf = io.BytesIO()
@@ -801,9 +795,6 @@ def render_livrables_sidebar(suivi: dict):
         else: cls, ic, txt = "todo", "", "à faire"
         st.markdown(f'<div class="sb-livrable"><span class="sb-chk {cls}">{ic}</span><span class="sb-liv-name">{label}</span><span class="sb-liv-status">{txt}</span></div>', unsafe_allow_html=True)
 
-# ══════════════════════════════════════════
-# PAGE DIRECTEUR ARTISTIQUE — LK
-# ══════════════════════════════════════════
 def page_directeur(lead_mode: bool, suivi: dict):
     st.markdown('<div class="hero-title">Design Promo 2K20</div><div class="hero-sub">Directeur Artistique — <strong>LK</strong> · Production visuelle & motion</div>', unsafe_allow_html=True)
     skey = "da_lead" if lead_mode else "da_team"
@@ -919,9 +910,6 @@ def page_directeur(lead_mode: bool, suivi: dict):
     st.markdown("---")
     with st.expander("👥 Profils candidats"): afficher_profils_candidats()
 
-# ══════════════════════════════════════════
-# PAGE DONNÉES & PLANNING — JUNIOR
-# ══════════════════════════════════════════
 def page_donnees():
     st.markdown('<div class="hero-title">Design Promo 2K20</div><div class="hero-sub">Responsable Inscriptions — <strong>Junior</strong> · Commission Design ESTP Yaoundé</div>', unsafe_allow_html=True)
 
@@ -1092,9 +1080,6 @@ def page_donnees():
             else:
                 st.error("Numéro non trouvé.")
 
-# ══════════════════════════════════════════
-# AUTH & MAIN
-# ══════════════════════════════════════════
 def check_access(pwd_key: str, btn_key: str, label: str) -> bool:
     session_key = f"auth_{pwd_key}"
     if st.session_state.get(session_key): return True
@@ -1126,7 +1111,7 @@ def check_access(pwd_key: str, btn_key: str, label: str) -> bool:
     return False
 
 def main():
-    inject_particle_animation()  # Animation CSS stable
+    inject_particle_animation()
     load_css()
     suivi = mettre_a_jour_suivi()
     
