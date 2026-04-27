@@ -95,206 +95,241 @@ AVT_CAND = avatar_candidat()
 # ══════════════════════════════════════════
 # ANIMATION CSS PARTICULES (100% fiable) - AVEC VERT & JAUNE
 # ══════════════════════════════════════════
-def fix_mobile_layout():
-    """Corrige les problèmes de layout mobile portrait"""
-    st.markdown("""
-    <style>
-    /* Force le viewport correct sur mobile */
-    @media (max-width: 768px) {
-        /* Empêche tout overflow horizontal */
-        html, body, .stApp {
-            overflow-x: hidden;
-            max-width: 100vw;
-            position: relative;
-        }
-        
-        /* Correction sidebar mobile */
-        [data-testid="stSidebar"] {
-            z-index: 999999 !important;
-        }
-        
-        /* Correction contenu principal */
-        section[data-testid="stMain"] {
-            max-width: 100vw;
-            overflow-x: hidden;
-        }
-        
-        /* Correction containers */
-        .main .block-container {
-            padding-top: 1rem;
-            padding-left: 1rem;
-            padding-right: 1rem;
-            max-width: 100% !important;
-        }
-    }
-    
-    /* Mode portrait spécifique */
-    @media (orientation: portrait) and (max-width: 768px) {
-        .stApp {
-            transform: none !important;
-            left: 0 !important;
-            right: 0 !important;
-        }
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
 def inject_particles_animation():
+    """
+    Animation réseau neuronal style CrewAI — version Studio LK.
+    Caractéristiques :
+    - Nœuds réguliers + nœuds HUB (plus grands, pulsants, lumineux)
+    - Connexions en dégradé qui s'estompent aux extrémités
+    - Halo/glow sur chaque nœud (shadowBlur canvas)
+    - Attraction douce vers le curseur (vortex)
+    - Click : explosion de particules au point de clic
+    - Palette charte : violet #7c3aed, bleu #0ea5e9, cyan #06b6d4
+    - Fond : dégradé sombre #07070E → #0e0e1d
+    """
     st.markdown("""
     <canvas id="particles-canvas"></canvas>
     <script>
     (function(){
-        const canvas = document.getElementById('particles-canvas');
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        
-        function resize() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+      const canvas = document.getElementById('particles-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+ 
+      function resize() {
+        canvas.width  = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+      resize();
+      window.addEventListener('resize', () => { resize(); init(); });
+ 
+      // ── Palette charte Studio LK ──
+      const PALETTE = [
+        { h: 263, s: 70, l: 58 },   // violet #7c3aed
+        { h: 200, s: 80, l: 48 },   // bleu   #0ea5e9
+        { h: 188, s: 90, l: 42 },   // cyan   #06b6d4
+        { h: 270, s: 60, l: 68 },   // violet clair #a78bfa
+      ];
+      function randColor(a) {
+        const c = PALETTE[Math.floor(Math.random() * PALETTE.length)];
+        return `hsla(${c.h},${c.s}%,${c.l}%,${a})`;
+      }
+ 
+      // ── Souris / Touch ──
+      const mouse = { x: canvas.width / 2, y: canvas.height / 2, active: false };
+      window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; mouse.active = true; });
+      window.addEventListener('touchmove', e => {
+        mouse.x = e.touches[0].clientX; mouse.y = e.touches[0].clientY; mouse.active = true;
+      }, { passive: true });
+ 
+      // Explosion au clic
+      const bursts = [];
+      window.addEventListener('click', e => { bursts.push({ x: e.clientX, y: e.clientY, r: 0, max: 120 }); });
+ 
+      // ── Classe Nœud ──
+      class Node {
+        constructor(isHub) {
+          this.reset(isHub);
         }
-        resize();
-        window.addEventListener('resize', () => { resize(); init(); });
-
-        const PALETTE = [
-            { h: 263, s: 70, l: 58 },
-            { h: 200, s: 80, l: 48 },
-            { h: 188, s: 90, l: 42 },
-            { h: 270, s: 60, l: 68 },
-        ];
-
-        const mouse = { x: canvas.width / 2, y: canvas.height / 2, active: false };
-        window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; mouse.active = true; });
-        window.addEventListener('touchmove', e => {
-            mouse.x = e.touches[0].clientX; mouse.y = e.touches[0].clientY; mouse.active = true;
-        }, { passive: true });
-
-        const bursts = [];
-        window.addEventListener('click', e => { bursts.push({ x: e.clientX, y: e.clientY, r: 0, max: 120 }); });
-
-        class Node {
-            constructor(isHub) { this.reset(isHub); }
-            reset(isHub) {
-                this.x = Math.random() * canvas.width;
-                this.y = Math.random() * canvas.height;
-                this.isHub = isHub || false;
-                // ✅ TAILLE AUGMENTÉE
-                this.size = this.isHub ? Math.random() * 6 + 5 : Math.random() * 4 + 2.5;
-                // ✅ VITESSE RALENTIE (mouvement très lent et fluide)
-                this.vx = (Math.random() - 0.5) * (this.isHub ? 0.05 : 0.10);
-                this.vy = (Math.random() - 0.5) * (this.isHub ? 0.05 : 0.10);
-                const c = PALETTE[Math.floor(Math.random() * PALETTE.length)];
-                this.h = c.h; this.s = c.s; this.l = c.l;
-                this.baseAlpha = this.isHub ? 0.85 : Math.random() * 0.45 + 0.2;
-                this.alpha = this.baseAlpha;
-                this.pulseSpeed = Math.random() * 0.015 + 0.005; // Pulsation plus douce
-                this.pulseOffset = Math.random() * Math.PI * 2;
+        reset(isHub) {
+          this.x      = Math.random() * canvas.width;
+          this.y      = Math.random() * canvas.height;
+          this.isHub  = isHub || false;
+          this.size   = this.isHub ? Math.random() * 3.5 + 3 : Math.random() * 1.6 + 0.6;
+          this.vx     = (Math.random() - 0.5) * (this.isHub ? 0.25 : 0.55);
+          this.vy     = (Math.random() - 0.5) * (this.isHub ? 0.25 : 0.55);
+          const c     = PALETTE[Math.floor(Math.random() * PALETTE.length)];
+          this.h      = c.h; this.s = c.s; this.l = c.l;
+          this.baseAlpha = this.isHub ? 0.85 : Math.random() * 0.45 + 0.2;
+          this.alpha  = this.baseAlpha;
+          // Pulsation
+          this.pulseSpeed = Math.random() * 0.025 + 0.008;
+          this.pulseOffset = Math.random() * Math.PI * 2;
+        }
+        update(t) {
+          // Mouvement de base
+          this.x += this.vx;
+          this.y += this.vy;
+          // Rebond doux
+          if (this.x < 0 || this.x > canvas.width)  this.vx *= -1;
+          if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+ 
+          // Attraction douce vers le curseur
+          if (mouse.active) {
+            const dx  = mouse.x - this.x;
+            const dy  = mouse.y - this.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const maxR = this.isHub ? 250 : 180;
+            if (dist < maxR) {
+              const force = (maxR - dist) / maxR * 0.012;
+              this.vx += dx * force;
+              this.vy += dy * force;
+              // Limiter la vitesse max
+              const speed = Math.sqrt(this.vx*this.vx + this.vy*this.vy);
+              const maxSpeed = this.isHub ? 1.2 : 2.0;
+              if (speed > maxSpeed) { this.vx = (this.vx/speed)*maxSpeed; this.vy = (this.vy/speed)*maxSpeed; }
             }
-            update(t) {
-                this.x += this.vx; this.y += this.vy;
-                if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
-                if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
-                if (mouse.active) {
-                    const dx = mouse.x - this.x; const dy = mouse.y - this.y;
-                    const dist = Math.sqrt(dx*dx + dy*dy);
-                    const maxR = this.isHub ? 250 : 180;
-                    if (dist < maxR) {
-                        const force = (maxR - dist) / maxR * 0.008;
-                        this.vx += dx * force; this.vy += dy * force;
-                        const speed = Math.sqrt(this.vx*this.vx + this.vy*this.vy);
-                        const maxSpeed = this.isHub ? 0.8 : 1.5;
-                        if (speed > maxSpeed) { this.vx = (this.vx/speed)*maxSpeed; this.vy = (this.vy/speed)*maxSpeed; }
-                    }
-                }
-                if (this.isHub) this.alpha = this.baseAlpha + Math.sin(t * this.pulseSpeed + this.pulseOffset) * 0.2;
-            }
-            draw(t) {
-                const glowSize = this.isHub ? this.size * 3 : this.size * 2.2;
-                const grd = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, glowSize * 2.5);
-                grd.addColorStop(0, `hsla(${this.h},${this.s}%,${this.l}%,${this.alpha * 0.5})`);
-                grd.addColorStop(0.5, `hsla(${this.h},${this.s}%,${this.l}%,${this.alpha * 0.15})`);
-                grd.addColorStop(1, `hsla(${this.h},${this.s}%,${this.l}%,0)`);
-                ctx.beginPath(); ctx.arc(this.x, this.y, glowSize * 2.5, 0, Math.PI * 2); ctx.fillStyle = grd; ctx.fill();
-                ctx.shadowBlur = this.isHub ? 15 : 6;
-                ctx.shadowColor = `hsla(${this.h},${this.s}%,${this.l}%,0.8)`;
-                ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fillStyle = `hsla(${this.h},${this.s}%,${this.l + 12}%,${this.alpha})`;
-                ctx.fill(); ctx.shadowBlur = 0;
-            }
+          }
+ 
+          // Pulsation alpha pour les hubs
+          if (this.isHub) {
+            this.alpha = this.baseAlpha + Math.sin(t * this.pulseSpeed + this.pulseOffset) * 0.25;
+          }
         }
-
-        let nodes = [];
-        const CONNECT_DIST = 160;
-        const CONNECT_DIST_SQ = CONNECT_DIST * CONNECT_DIST;
-
-        function init() {
-            nodes = [];
-            const total = Math.min(Math.floor((canvas.width * canvas.height) / 14000), 85);
-            const hubs = Math.max(4, Math.floor(total * 0.12));
-            for (let i = 0; i < total; i++) nodes.push(new Node(i < hubs));
+        draw(t) {
+          const glowSize = this.isHub
+            ? this.size * (3.5 + Math.sin(t * this.pulseSpeed + this.pulseOffset) * 1.5)
+            : this.size * 2.5;
+ 
+          // Halo externe (glow)
+          const grd = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, glowSize * 2.8);
+          grd.addColorStop(0,   `hsla(${this.h},${this.s}%,${this.l}%,${this.alpha * 0.55})`);
+          grd.addColorStop(0.4, `hsla(${this.h},${this.s}%,${this.l}%,${this.alpha * 0.18})`);
+          grd.addColorStop(1,   `hsla(${this.h},${this.s}%,${this.l}%,0)`);
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, glowSize * 2.8, 0, Math.PI * 2);
+          ctx.fillStyle = grd;
+          ctx.fill();
+ 
+          // Nœud central
+          ctx.shadowBlur  = this.isHub ? 18 : 8;
+          ctx.shadowColor = `hsla(${this.h},${this.s}%,${this.l}%,0.9)`;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fillStyle = `hsla(${this.h},${this.s}%,${this.l + 15}%,${this.alpha})`;
+          ctx.fill();
+          ctx.shadowBlur = 0;
         }
-
-        function drawConnections() {
-            for (let a = 0; a < nodes.length; a++) {
-                for (let b = a + 1; b < nodes.length; b++) {
-                    const dx = nodes[a].x - nodes[b].x; const dy = nodes[a].y - nodes[b].y;
-                    const dSq = dx*dx + dy*dy;
-                    if (dSq > CONNECT_DIST_SQ) continue;
-                    const ratio = 1 - dSq / CONNECT_DIST_SQ;
-                    const grad = ctx.createLinearGradient(nodes[a].x, nodes[a].y, nodes[b].x, nodes[b].y);
-                    grad.addColorStop(0, `hsla(${nodes[a].h},${nodes[a].s}%,${nodes[a].l}%,${nodes[a].alpha * ratio * 0.4})`);
-                    grad.addColorStop(0.5, `hsla(263,70%,60%,${ratio * 0.12})`);
-                    grad.addColorStop(1, `hsla(${nodes[b].h},${nodes[b].s}%,${nodes[b].l}%,${nodes[b].alpha * ratio * 0.4})`);
-                    ctx.beginPath(); ctx.moveTo(nodes[a].x, nodes[a].y); ctx.lineTo(nodes[b].x, nodes[b].y);
-                    ctx.strokeStyle = grad; ctx.lineWidth = (nodes[a].isHub || nodes[b].isHub) ? 0.7 : 0.35; ctx.stroke();
-                }
-            }
+      }
+ 
+      // ── Pool de nœuds ──
+      let nodes = [];
+      const CONNECT_DIST = 145;
+      const CONNECT_DIST_SQ = CONNECT_DIST * CONNECT_DIST;
+ 
+      function init() {
+        nodes = [];
+        const total = Math.min(Math.floor((canvas.width * canvas.height) / 10000), 100);
+        const hubs  = Math.max(5, Math.floor(total * 0.12));
+        for (let i = 0; i < total; i++) nodes.push(new Node(i < hubs));
+      }
+ 
+      // ── Connexions en dégradé ──
+      function drawConnections() {
+        for (let a = 0; a < nodes.length; a++) {
+          for (let b = a + 1; b < nodes.length; b++) {
+            const dx = nodes[a].x - nodes[b].x;
+            const dy = nodes[a].y - nodes[b].y;
+            const dSq = dx*dx + dy*dy;
+            if (dSq > CONNECT_DIST_SQ) continue;
+ 
+            const ratio = 1 - dSq / CONNECT_DIST_SQ;
+            const alphaA = nodes[a].alpha * ratio;
+            const alphaB = nodes[b].alpha * ratio;
+ 
+            // Dégradé qui s'estompe aux deux extrémités (style CrewAI)
+            const grad = ctx.createLinearGradient(nodes[a].x, nodes[a].y, nodes[b].x, nodes[b].y);
+            grad.addColorStop(0,   `hsla(${nodes[a].h},${nodes[a].s}%,${nodes[a].l}%,${alphaA * 0.55})`);
+            grad.addColorStop(0.5, `hsla(263,70%,60%,${ratio * 0.18})`);
+            grad.addColorStop(1,   `hsla(${nodes[b].h},${nodes[b].s}%,${nodes[b].l}%,${alphaB * 0.55})`);
+ 
+            ctx.beginPath();
+            ctx.moveTo(nodes[a].x, nodes[a].y);
+            ctx.lineTo(nodes[b].x, nodes[b].y);
+            ctx.strokeStyle = grad;
+            ctx.lineWidth   = (nodes[a].isHub || nodes[b].isHub) ? 0.85 : 0.45;
+            ctx.stroke();
+          }
         }
-
-        function drawBackground() {
-            const bg = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-            bg.addColorStop(0, 'hsl(240,40%,3%)'); bg.addColorStop(1, 'hsl(240,30%,3%)');
-            ctx.fillStyle = bg; ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+ 
+      // ── Fond dégradé animé (subtil) ──
+      function drawBackground(t) {
+        const cx = canvas.width * 0.5;
+        const cy = canvas.height * 0.5;
+        const shift = Math.sin(t * 0.0004) * 0.08;
+ 
+        const bg = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+        bg.addColorStop(0,        `hsl(240,40%,${4 + shift * 1.5}%)`);
+        bg.addColorStop(0.45 + shift, `hsl(260,35%,${5 + shift}%)`);
+        bg.addColorStop(1,        `hsl(240,30%,4%)`);
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+ 
+        // Vignette subtile au centre
+        const vgn = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(canvas.width, canvas.height) * 0.7);
+        vgn.addColorStop(0,   'rgba(124,58,237,0.04)');
+        vgn.addColorStop(0.5, 'rgba(14,165,233,0.02)');
+        vgn.addColorStop(1,   'rgba(0,0,0,0.3)');
+        ctx.fillStyle = vgn;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+ 
+      // ── Boucle principale ──
+      let t = 0;
+      function animate() {
+        requestAnimationFrame(animate);
+        t++;
+ 
+        drawBackground(t);
+        drawConnections();
+        for (const n of nodes) { n.update(t); n.draw(t); }
+ 
+        // Ondes de clic
+        for (let i = bursts.length - 1; i >= 0; i--) {
+          const b = bursts[i];
+          b.r += 4;
+          const alpha = 0.6 * (1 - b.r / b.max);
+          ctx.beginPath();
+          ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+          ctx.strokeStyle = `rgba(167,139,250,${alpha})`;
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+          if (b.r >= b.max) bursts.splice(i, 1);
         }
-
-        let t = 0;
-        function animate() {
-            requestAnimationFrame(animate); t++;
-            drawBackground(); drawConnections();
-            for (const n of nodes) { n.update(t); n.draw(t); }
-            for (let i = bursts.length - 1; i >= 0; i--) {
-                const b = bursts[i]; b.r += 3;
-                const alpha = 0.5 * (1 - b.r / b.max);
-                ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
-                ctx.strokeStyle = `rgba(167,139,250,${alpha})`; ctx.lineWidth = 1.2; ctx.stroke();
-                if (b.r >= b.max) bursts.splice(i, 1);
-            }
-        }
-        init(); animate();
+      }
+ 
+      init();
+      animate();
     })();
     </script>
     <style>
     #particles-canvas {
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        z-index: -1; pointer-events: none; display: block;
-        background: transparent !important;
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        z-index: 0;              /* au-dessus du fond transparent */
+        pointer-events: none;   /* ne bloque pas les clics */
+        display: block;
     }
+    /* Contenu Streamlit AU-DESSUS du canvas */
+    [data-testid="stSidebar"] { z-index: 10 !important; }
+    .main, section[data-testid="stMain"] { z-index: 5 !important; position: relative !important; }
     </style>
     """, unsafe_allow_html=True)
-    
 def load_css():
     st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap');
-    /* ✅ FOND GRIS FONCÉ RESTAURÉ SUR TOUTE L'INTERFACE */
-    .stApp, section[data-testid="stMain"], div[data-testid="stVerticalBlock"], .main .block-container {
-    background-color: #07070E !important;
-}
-
-/* Canvas strictement en arrière-plan sans interférence */
-#particles-canvas {
-    background: transparent !important;
-    z-index: -1 !important;
-}
     html,body,[class*="css"]{font-family:'Inter','Helvetica Neue',Helvetica,Arial,sans-serif;background-color:#07070E;}
     .stApp{background-color:transparent;}
 
@@ -340,7 +375,7 @@ def load_css():
 
     /* BOUTONS */
     .stButton>button{background:linear-gradient(135deg,#7C3AED,#A855F7)!important;color:white!important;font-weight:600;border:none;border-radius:.75rem!important;}
-    .stButton>bgutton:hover{background:linear-gradient(135deg,#A855F7, #EC4899)!important;box-shadow:0 4px 12px rgba(124,58,237,.3);}
+    .stButton>button:hover{background:linear-gradient(135deg,#A855F7, #EC4899)!important;box-shadow:0 4px 12px rgba(124,58,237,.3);}
 
     /* CARTES */
     .idea-card{background:#0E0E1D;border:1px solid rgba(167,139,250,.15);border-left:3px solid #7c3aed;border-radius:12px;padding:12px 16px;margin-bottom:10px;}
@@ -915,7 +950,6 @@ def fix_sidebar_visibility():
     </style>
     """, unsafe_allow_html=True)
 def main():
-    fix_mobile_layout()
     inject_particles_animation()
     load_css()
     fix_sidebar_visibility()
