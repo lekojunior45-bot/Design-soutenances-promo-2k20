@@ -167,8 +167,8 @@ def inject_particles_animation():
 
     @keyframes floatParticle {
         0% { transform: translateY(0px) translateX(0px); opacity: 0; }
-        10% { opacity: 0.7; }
-        90% { opacity: 0.3; }
+        10% { opacity: 0.4; }
+        90% { opacity: 0.1; }
         100% { transform: translateY(-500px) translateX(calc(80px * (sin(var(--angle, 1))))); opacity: 0; }
     }
     .aurora-glow {
@@ -191,7 +191,8 @@ def inject_particles_animation():
     const glow = document.getElementById('cursorGlow');
     if (glow) {
         document.addEventListener('mousemove', (e) => { glow.style.left = e.clientX + 'px'; glow.style.top = e.clientY + 'px'; });
-        document.addEventListener('touchmove', (e) => { if(e.touches.length) { glow.style.left = e.touches[0].clientX + 'px'; glow.style.top = e.touches[0].clientY + 'px'; } });
+        document.addEventListener('touchm
+        ove', (e) => { if(e.touches.length) { glow.style.left = e.touches[0].clientX + 'px'; glow.style.top = e.touches[0].clientY + 'px'; } });
     }
     </script>
     """, unsafe_allow_html=True)
