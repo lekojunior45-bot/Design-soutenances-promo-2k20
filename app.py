@@ -96,242 +96,131 @@ AVT_CAND = avatar_candidat()
 # ANIMATION CSS PARTICULES (100% fiable) - AVEC VERT & JAUNE
 # ══════════════════════════════════════════
 def inject_particles_animation():
-    """
-    Animation réseau neuronal style CrewAI — version Studio LK.
-    Caractéristiques :
-    - Nœuds réguliers + nœuds HUB (plus grands, pulsants, lumineux)
-    - Connexions en dégradé qui s'estompent aux extrémités
-    - Halo/glow sur chaque nœud (shadowBlur canvas)
-    - Attraction douce vers le curseur (vortex)
-    - Click : explosion de particules au point de clic
-    - Palette charte : violet #7c3aed, bleu #0ea5e9, cyan #06b6d4
-    - Fond : dégradé sombre #07070E → #0e0e1d
-    """
     st.markdown("""
-    <canvas id="particles-canvas"></canvas>
-    <script>
-    (function(){
-      const canvas = document.getElementById('particles-canvas');
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
- 
-      function resize() {
-        canvas.width  = window.innerWidth;
-        canvas.height = window.innerHeight;
-      }
-      resize();
-      window.addEventListener('resize', () => { resize(); init(); });
- 
-      // ── Palette charte Studio LK ──
-      const PALETTE = [
-        { h: 263, s: 70, l: 58 },   // violet #7c3aed
-        { h: 200, s: 80, l: 48 },   // bleu   #0ea5e9
-        { h: 188, s: 90, l: 42 },   // cyan   #06b6d4
-        { h: 270, s: 60, l: 68 },   // violet clair #a78bfa
-      ];
-      function randColor(a) {
-        const c = PALETTE[Math.floor(Math.random() * PALETTE.length)];
-        return `hsla(${c.h},${c.s}%,${c.l}%,${a})`;
-      }
- 
-      // ── Souris / Touch ──
-      const mouse = { x: canvas.width / 2, y: canvas.height / 2, active: false };
-      window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; mouse.active = true; });
-      window.addEventListener('touchmove', e => {
-        mouse.x = e.touches[0].clientX; mouse.y = e.touches[0].clientY; mouse.active = true;
-      }, { passive: true });
- 
-      // Explosion au clic
-      const bursts = [];
-      window.addEventListener('click', e => { bursts.push({ x: e.clientX, y: e.clientY, r: 0, max: 120 }); });
- 
-      // ── Classe Nœud ──
-      class Node {
-        constructor(isHub) {
-          this.reset(isHub);
-        }
-        reset(isHub) {
-          this.x      = Math.random() * canvas.width;
-          this.y      = Math.random() * canvas.height;
-          this.isHub  = isHub || false;
-          this.size   = this.isHub ? Math.random() * 3.5 + 3 : Math.random() * 1.6 + 0.6;
-          this.vx     = (Math.random() - 0.5) * (this.isHub ? 0.25 : 0.55);
-          this.vy     = (Math.random() - 0.5) * (this.isHub ? 0.25 : 0.55);
-          const c     = PALETTE[Math.floor(Math.random() * PALETTE.length)];
-          this.h      = c.h; this.s = c.s; this.l = c.l;
-          this.baseAlpha = this.isHub ? 0.85 : Math.random() * 0.45 + 0.2;
-          this.alpha  = this.baseAlpha;
-          // Pulsation
-          this.pulseSpeed = Math.random() * 0.025 + 0.008;
-          this.pulseOffset = Math.random() * Math.PI * 2;
-        }
-        update(t) {
-          // Mouvement de base
-          this.x += this.vx;
-          this.y += this.vy;
-          // Rebond doux
-          if (this.x < 0 || this.x > canvas.width)  this.vx *= -1;
-          if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
- 
-          // Attraction douce vers le curseur
-          if (mouse.active) {
-            const dx  = mouse.x - this.x;
-            const dy  = mouse.y - this.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            const maxR = this.isHub ? 250 : 180;
-            if (dist < maxR) {
-              const force = (maxR - dist) / maxR * 0.012;
-              this.vx += dx * force;
-              this.vy += dy * force;
-              // Limiter la vitesse max
-              const speed = Math.sqrt(this.vx*this.vx + this.vy*this.vy);
-              const maxSpeed = this.isHub ? 1.2 : 2.0;
-              if (speed > maxSpeed) { this.vx = (this.vx/speed)*maxSpeed; this.vy = (this.vy/speed)*maxSpeed; }
-            }
-          }
- 
-          // Pulsation alpha pour les hubs
-          if (this.isHub) {
-            this.alpha = this.baseAlpha + Math.sin(t * this.pulseSpeed + this.pulseOffset) * 0.25;
-          }
-        }
-        draw(t) {
-          const glowSize = this.isHub
-            ? this.size * (3.5 + Math.sin(t * this.pulseSpeed + this.pulseOffset) * 1.5)
-            : this.size * 2.5;
- 
-          // Halo externe (glow)
-          const grd = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, glowSize * 2.8);
-          grd.addColorStop(0,   `hsla(${this.h},${this.s}%,${this.l}%,${this.alpha * 0.55})`);
-          grd.addColorStop(0.4, `hsla(${this.h},${this.s}%,${this.l}%,${this.alpha * 0.18})`);
-          grd.addColorStop(1,   `hsla(${this.h},${this.s}%,${this.l}%,0)`);
-          ctx.beginPath();
-          ctx.arc(this.x, this.y, glowSize * 2.8, 0, Math.PI * 2);
-          ctx.fillStyle = grd;
-          ctx.fill();
- 
-          // Nœud central
-          ctx.shadowBlur  = this.isHub ? 18 : 8;
-          ctx.shadowColor = `hsla(${this.h},${this.s}%,${this.l}%,0.9)`;
-          ctx.beginPath();
-          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-          ctx.fillStyle = `hsla(${this.h},${this.s}%,${this.l + 15}%,${this.alpha})`;
-          ctx.fill();
-          ctx.shadowBlur = 0;
-        }
-      }
- 
-      // ── Pool de nœuds ──
-      let nodes = [];
-      const CONNECT_DIST = 145;
-      const CONNECT_DIST_SQ = CONNECT_DIST * CONNECT_DIST;
- 
-      function init() {
-        nodes = [];
-        const total = Math.min(Math.floor((canvas.width * canvas.height) / 10000), 100);
-        const hubs  = Math.max(5, Math.floor(total * 0.12));
-        for (let i = 0; i < total; i++) nodes.push(new Node(i < hubs));
-      }
- 
-      // ── Connexions en dégradé ──
-      function drawConnections() {
-        for (let a = 0; a < nodes.length; a++) {
-          for (let b = a + 1; b < nodes.length; b++) {
-            const dx = nodes[a].x - nodes[b].x;
-            const dy = nodes[a].y - nodes[b].y;
-            const dSq = dx*dx + dy*dy;
-            if (dSq > CONNECT_DIST_SQ) continue;
- 
-            const ratio = 1 - dSq / CONNECT_DIST_SQ;
-            const alphaA = nodes[a].alpha * ratio;
-            const alphaB = nodes[b].alpha * ratio;
- 
-            // Dégradé qui s'estompe aux deux extrémités (style CrewAI)
-            const grad = ctx.createLinearGradient(nodes[a].x, nodes[a].y, nodes[b].x, nodes[b].y);
-            grad.addColorStop(0,   `hsla(${nodes[a].h},${nodes[a].s}%,${nodes[a].l}%,${alphaA * 0.55})`);
-            grad.addColorStop(0.5, `hsla(263,70%,60%,${ratio * 0.18})`);
-            grad.addColorStop(1,   `hsla(${nodes[b].h},${nodes[b].s}%,${nodes[b].l}%,${alphaB * 0.55})`);
- 
-            ctx.beginPath();
-            ctx.moveTo(nodes[a].x, nodes[a].y);
-            ctx.lineTo(nodes[b].x, nodes[b].y);
-            ctx.strokeStyle = grad;
-            ctx.lineWidth   = (nodes[a].isHub || nodes[b].isHub) ? 0.85 : 0.45;
-            ctx.stroke();
-          }
-        }
-      }
- 
-      // ── Fond dégradé animé (subtil) ──
-      function drawBackground(t) {
-        const cx = canvas.width * 0.5;
-        const cy = canvas.height * 0.5;
-        const shift = Math.sin(t * 0.0004) * 0.08;
- 
-        const bg = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-        bg.addColorStop(0,        `hsl(240,40%,${4 + shift * 1.5}%)`);
-        bg.addColorStop(0.45 + shift, `hsl(260,35%,${5 + shift}%)`);
-        bg.addColorStop(1,        `hsl(240,30%,4%)`);
-        ctx.fillStyle = bg;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
- 
-        // Vignette subtile au centre
-        const vgn = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(canvas.width, canvas.height) * 0.7);
-        vgn.addColorStop(0,   'rgba(124,58,237,0.04)');
-        vgn.addColorStop(0.5, 'rgba(14,165,233,0.02)');
-        vgn.addColorStop(1,   'rgba(0,0,0,0.3)');
-        ctx.fillStyle = vgn;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-      }
- 
-      // ── Boucle principale ──
-      let t = 0;
-      function animate() {
-        requestAnimationFrame(animate);
-        t++;
- 
-        drawBackground(t);
-        drawConnections();
-        for (const n of nodes) { n.update(t); n.draw(t); }
- 
-        // Ondes de clic
-        for (let i = bursts.length - 1; i >= 0; i--) {
-          const b = bursts[i];
-          b.r += 4;
-          const alpha = 0.6 * (1 - b.r / b.max);
-          ctx.beginPath();
-          ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
-          ctx.strokeStyle = `rgba(167,139,250,${alpha})`;
-          ctx.lineWidth = 1.5;
-          ctx.stroke();
-          if (b.r >= b.max) bursts.splice(i, 1);
-        }
-      }
- 
-      init();
-      animate();
-    })();
-    </script>
     <style>
-    #particles-canvas {
-        position: fixed;
-        top: 0; left: 0;
+    /* Conteneur principal - commence après la sidebar sur desktop */
+    #particles-container {
+        position: fixed; top: 0; left: 0;
         width: 100%; height: 100%;
-        z-index: 0;              /* au-dessus du fond transparent */
-        pointer-events: none;   /* ne bloque pas les clics */
-        display: block;
+        z-index: -1; pointer-events: none; overflow: hidden;
     }
-    /* Contenu Streamlit AU-DESSUS du canvas */
-    [data-testid="stSidebar"] { z-index: 10 !important; }
-    .main, section[data-testid="stMain"] { z-index: 5 !important; position: relative !important; }
+    @media (min-width: 992px) {
+        #particles-container { left: 300px; width: calc(100% - 300px); }
+    }
+    .particle {
+        position: absolute;
+        background: radial-gradient(circle, rgba(124,58,237,0.8), rgba(14,165,233,0.4));
+        border-radius: 50%; pointer-events: none;
+        animation: floatParticle linear infinite;
+    }
+    /* Tailles et positions (extraites de ton fichier) */
+    .particle:nth-child(1) { width: 4px; height: 4px; top: 15%; left: 10%; animation-duration: 28s; animation-delay: 0s; }
+    .particle:nth-child(2) { width: 2px; height: 2px; top: 35%; left: 25%; animation-duration: 62s; animation-delay: 4s; }
+    .particle:nth-child(3) { width: 5px; height: 5px; top: 55%; left: 45%; animation-duration: 44s; animation-delay: 2s; }
+    .particle:nth-child(4) { width: 3px; height: 3px; top: 75%; left: 70%; animation-duration: 50s; animation-delay: s; }
+    .particle:nth-child(5) { width: 6px; height: 6px; top: 85%; left: 90%; animation-duration: 36s; animation-delay: 1.5s; }
+    .particle:nth-child(6) { width: 2px; height: 2px; top: 25%; left: 80%; animation-duration: 74s; animation-delay: 3s; }
+    .particle:nth-child(7) { width: 4px; height: 4px; top: 45%; left: 15%; animation-duration: 62s; animation-delay: 2.8s; }
+    .particle:nth-child(8) { width: 3px; height: 3px; top: 65%; left: 35%; animation-duration: 59s; animation-delay: 2.2s; }
+    .particle:nth-child(9) { width: 5px; height: 5px; top: 10%; left: 55%; animation-duration: 41s; animation-delay: 4s; }
+    .particle:nth-child(10) { width: 2px; height: 2px; top: 30%; left: 95%; animation-duration: 57s; animation-delay: 1.2s; }
+    .particle:nth-child(11) { width: 4px; height: 4px; top: 50%; left: 5%; animation-duration: 43s; animation-delay: 2.5s; }
+    .particle:nth-child(12) { width: 3px; height: 3px; top: 70%; left: 85%; animation-duration: 65s; animation-delay: 5.3s; }
+    .particle:nth-child(13) { width: 6px; height: 6px; top: 90%; left: 20%; animation-duration: 65s; animation-delay: 3.5s; }
+    .particle:nth-child(14) { width: 2px; height: 2px; top: 5%; left: 40%; animation-duration: 33s; animation-delay: 3.8s; }
+    .particle:nth-child(15) { width: 4px; height: 4px; top: 40%; left: 60%; animation-duration: 38s; animation-delay: 4.2s; }
+    .particle:nth-child(16) { width: 3px; height: 3px; top: 60%; left: 75%; animation-duration: 50s; animation-delay: 0.7s; }
+    .particle:nth-child(17) { width: 5px; height: 5px; top: 80%; left: 50%; animation-duration: 42s; animation-delay: 2.8s; }
+    .particle:nth-child(18) { width: 2px; height: 2px; top: 20%; left: 65%; animation-duration: 66s; animation-delay: 5.1s; }
+    .particle:nth-child(19) { width: 4px; height: 4px; top: 95%; left: 8%; animation-duration: 59s; animation-delay: 3.2s; }
+    .particle:nth-child(20) { width: 3px; height: 3px; top: 8%; left: 30%; animation-duration: 14s; animation-delay: 4.5s; }
+    .particle:nth-child(21) { width: 5px; height: 5px; top: 38%; left: 98%; animation-duration: 44s; animation-delay: 8.4s; }
+    .particle:nth-child(22) { width: 2px; height: 2px; top: 58%; left: 12%; animation-duration: 31s; animation-delay: 2.1s; }
+    .particle:nth-child(23) { width: 4px; height: 4px; top: 78%; left: 42%; animation-duration: 41s; animation-delay: 3.8s; }
+    .particle:nth-child(24) { width: 3px; height: 3px; top: 12%; left: 88%; animation-duration: 67s; animation-delay: 1.4s; }
+    .particle:nth-child(25) { width: 6px; height: 6px; top: 32%; left: 22%; animation-duration: 23s; animation-delay: 2.9s; }
+    .particle:nth-child(26) { width: 2px; height: 2px; top: 52%; left: 78%; animation-duration: 55s; animation-delay: 0.6s; }
+    .particle:nth-child(27) { width: 4px; height: 4px; top: 72%; left: 32%; animation-duration: 68s; animation-delay: 3.1s; }
+    .particle:nth-child(28) { width: 3px; height: 3px; top: 92%; left: 55%; animation-duration: 40s; animation-delay: 4.9s; }
+    .particle:nth-child(29) { width: 5px; height: 5px; top: 18%; left: 48%; animation-duration: 32s; animation-delay: 4.3s; }
+    .particle:nth-child(30) { width: 2px; height: 2px; top: 48%; left: 92%; animation-duration: 22s; animation-delay: 2.9s; }
+    .particle:nth-child(31) { width: 4px; height: 4px; top: 68%; left: 8%; animation-duration: 16s; animation-delay: 2.4s; }
+    .particle:nth-child(32) { width: 3px; height: 3px; top: 88%; left: 68%; animation-duration: 59s; animation-delay: 3.6s; }
+    .particle:nth-child(33) { width: 6px; height: 6px; top: 28%; left: 52%; animation-duration: 64s; animation-delay: 3.7s; }
+    .particle:nth-child(34) { width: 2px; height: 2px; top: 42%; left: 3%; animation-duration: 25s; animation-delay: 2.3s; }
+    .particle:nth-child(35) { width: 4px; height: 4px; top: 62%; left: 62%; animation-duration: 43s; animation-delay: 4.1s; }
+    .particle:nth-child(36) { width: 3px; height: 3px; top: 82%; left: 82%; animation-duration: 51s; animation-delay: 3.2s; }
+    .particle:nth-child(37) { width: 5px; height: 5px; top: 22%; left: 18%; animation-duration: 17s; animation-delay: 5.4s; }
+    .particle:nth-child(38) { width: 2px; height: 2px; top: 56%; left: 38%; animation-duration: 23s; animation-delay: 1.5s; }
+    .particle:nth-child(39) { width: 4px; height: 4px; top: 76%; left: 58%; animation-duration: 55s; animation-delay: 6.7s; }
+    .particle:nth-child(40) { width: 3px; height: 3px; top: 96%; left: 14%; animation-duration: 18s; animation-delay: 4.9s; }
+    .particle:nth-child(41) { width: 5px; height: 5px; top: 6%; left: 75%; animation-duration: 20s; animation-delay: 8.1s; }
+    .particle:nth-child(42) { width: 2px; height: 2px; top: 36%; left: 42%; animation-duration: 81s; animation-delay: 2.6s; }
+    .particle:nth-child(43) { width: 4px; height: 4px; top: 66%; left: 28%; animation-duration: 24s; animation-delay: 3.3s; }
+    .particle:nth-child(44) { width: 3px; height: 3px; top: 86%; left: 48%; animation-duration: 46s; animation-delay: 3.0s; }
+    .particle:nth-child(45) { width: 6px; height: 6px; top: 14%; left: 98%; animation-duration: 59s; animation-delay: 4.7s; }
+    .particle:nth-child(46) { width: 2px; height: 2px; top: 44%; left: 72%; animation-duration: 52s; animation-delay: 7.8s; }
+    .particle:nth-child(47) { width: 4px; height: 4px; top: 64%; left: 18%; animation-duration: 34s; animation-delay: 5.0s; }
+    .particle:nth-child(48) { width: 3px; height: 3px; top: 84%; left: 38%; animation-duration: 25s; animation-delay: 3.3s; }
+    .particle:nth-child(49) { width: 5px; height: 5px; top: 26%; left: 82%; animation-duration: 32s; animation-delay: 7s; }
+    .particle:nth-child(50) { width: 2px; height: 2px; top: 46%; left: 58%; animation-duration: 18s; animation-delay: 4.6s; }
+
+    @keyframes floatParticle {
+        0% { transform: translateY(0px) translateX(0px); opacity: 0; }
+        10% { opacity: 0.7; }
+        90% { opacity: 0.3; }
+        100% { transform: translateY(-500px) translateX(calc(80px * (sin(var(--angle, 1))))); opacity: 0; }
+    }
+    .aurora-glow {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        z-index: -1; background: radial-gradient(ellipse at 50% 50%, rgba(124,58,237,0.08), rgba(14,165,233,0.04), transparent);
+        animation: auroraShift 12s ease-in-out infinite; pointer-events: none;
+    }
+    @keyframes auroraShift { 0% { opacity: 0.5; transform: scale(1); } 50% { opacity: 0.8; transform: scale(1.05); } 100% { opacity: 0.5; transform: scale(1); } }
     </style>
+    <div id="particles-container">
+        <div class="aurora-glow"></div>
+        <div class="cursor-glow" id="cursorGlow"></div>
+        <div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div>
+        <div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div>
+        <div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div>
+        <div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div>
+        <div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div>
+    </div>
+    <script>
+    const glow = document.getElementById('cursorGlow');
+    if (glow) {
+        document.addEventListener('mousemove', (e) => { glow.style.left = e.clientX + 'px'; glow.style.top = e.clientY + 'px'; });
+        document.addEventListener('touchmove', (e) => { if(e.touches.length) { glow.style.left = e.touches[0].clientX + 'px'; glow.style.top = e.touches[0].clientY + 'px'; } });
+    }
+    </script>
     """, unsafe_allow_html=True)
+    
 def load_css():
     st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap');
     html,body,[class*="css"]{font-family:'Inter','Helvetica Neue',Helvetica,Arial,sans-serif;background-color:#07070E;}
     .stApp{background-color:transparent;}
+                
+                /* ── SIDEBAR : SUPPRESSION DU FOND TROP SOMBRE ── */
+[data-testid="stSidebar"] {
+    background-color: transparent !important;
+    backdrop-filter: none !important;
+    border-right: 1px solid rgba(255,255,255,0.08) !important;
+}
+[data-testid="stSidebar"] > div:first-child {
+    background: transparent !important;
+}
+/* Expander "Comment utiliser" sans fond noir */
+details[open] > summary, details > summary {
+    background: rgba(255,255,255,0.04) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+}
+.streamlit-expanderContent {
+    background: transparent !important;
+    border: none !important;
+}
 
     /* CORRECTION MOBILE & SIDEBAR : Ne masque pas le header pour préserver le bouton hamburger */
     #MainMenu {visibility: hidden;}
